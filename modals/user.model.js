@@ -19,11 +19,27 @@ const userSchema = new Schema({
     type: String,
     required: false,
   },
+  skills: {
+    type: [],
+    required: false,
+  },
   country: {
     type: String,
     required: false,
   },
+  language: {
+    type: String,
+    required: false,
+  },
   phone: {
+    type: Number,
+    required: false,
+  },
+  github: {
+    type: String,
+    required: false,
+  },
+  linkedin: {
     type: String,
     required: false,
   },
@@ -42,7 +58,11 @@ const userSchema = new Schema({
   status:{
     type:Boolean,
     default:true
-  }
+  },
+  // gigs:{
+  //   type:mongoose.Schema.Types.ObjectId,
+  //   ref:"post"
+  // }
 },{
   timestamps:true
 });

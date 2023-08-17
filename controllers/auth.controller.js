@@ -10,7 +10,7 @@ import crypto from "crypto"
 export const  register = async (req,res,next)=>{
 
    try {
-    console.log("register function");
+  
     const {email}=req.body
     const exist = await User.findOne({email:email})
     if(exist){

@@ -12,7 +12,6 @@ export const Auth = async (req, res, next) => {
                 console.log("token is not the same");
                 return res.status(401).json({message:"Auth success",status:true})
             }else{
-                console.log("auth next");
                 req.userId=decoded.userId
                 next()
             }

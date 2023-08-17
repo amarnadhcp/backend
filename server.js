@@ -8,7 +8,7 @@ import userRoute from "./routes/user.route.js";
 import authRoute from "./routes/auth.route.js"
 import adminRoute from "./routes/admin.route.js"
 import sellerRoute  from "./routes/seller.route.js"
-
+import socketUtils  from "./utils/socketio.js"
 
 const app = express();
 dotenv.config();
@@ -42,20 +42,16 @@ app.use((err,req,res,next)=>{
 })
 
 
-app.listen(8800, () => {
+const server = app.listen(8800, () => {
   connect();
   console.log("bakecnt is working");
 });
 
 
+socketUtils.initialize(server)
+const io= socketUtils.getIO()
 
 
 
-// const connect =async()=>{
-//   try {
-//     await mongoose.connect(process.env.MONGO)
-//     console.log("conenected");
-//   } catch (error) {
-//     console.log(error)
-//   }
-// }
+
+
