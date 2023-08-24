@@ -23,25 +23,24 @@ export const  register = async (req,res,next)=>{
       password:hash
    })
 
-    let user =  await newUser.save().then(console.log("updated"))
+    let user =  await newUser.save().then(console.log("Registered"))
 
-    const token = jwt.sign({ id: user._id},
-      process.env.JWT_KEY,{ expiresIn: "24hr" });
+  
 
     const emailtoken = await new Tokenmodel({
       userId: user._id,
       token: crypto.randomBytes(32).toString("hex"),
     }).save();
 
-    const url = `${process.env.BASE_URL}/${user.id}/verify/${emailtoken.token}`
+    const url = `${process.env.BASE_URL}/${user._id}/verify/${emailtoken.token}`
     await sendEmail(user.email, "Verify Email", url);
     console.log("email suucess");
-    return res.status(200).json({created:true,user:user,token:token, message:"verification gmail has been sent to your gmail"})
+    return res.status(200).json({created:true,token:token, message:"verification gmail has been sent to your gmail"})
    }
     
    } catch (err) {
       // res.status(500).send("something went wrong")
-      next(err)
+      // next(err)
    }
 
 }
@@ -63,7 +62,11 @@ export const verification = async (req, res) => {
      }
      await User.updateOne({ _id: user._id }, { $set: { verified: true } });
      await Tokenmodel.deleteOne({ _id: token._id });
-     res.status(200).json({user:user, message: "Email Verification Successful " });
+
+     const jwtToken = jwt.sign({ id: user._id},
+      process.env.JWT_KEY,{ expiresIn: "24hr" });
+
+     res.status(200).json({user:user,jwtToken, message: "Email Verification Successful " });
    } catch (error) {
      console.log(error);
      return res.status(500).json({ message: "internal server error" });
@@ -79,7 +82,7 @@ export const login = async(req,res,next)=>{
       const isCorrect = bcrypt.compareSync(req.body.password,user.password)
       if(!isCorrect)return res.status(201).json({access:false,message:"wrong password or username!"})
         
-      const token = jwt.sign({ id: user._id, isSeller: user.isSeller},
+      const token = jwt.sign({ userId: user._id, isSeller: user.isSeller},
       process.env.JWT_KEY,{ expiresIn: "24hr" });
 
       const {password, ...info} = user._doc

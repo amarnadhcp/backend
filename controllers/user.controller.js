@@ -12,6 +12,15 @@ export const deleteuser = (req, res) => {
   res.send("the response");
 };
 
+export const categorys = async(req,res,next)=>{
+  try {
+      const category = await categoryModel.find({})
+      return res.status(200).json(category)
+  } catch (error) {
+      
+  }
+}
+
 export const BecomeSeller = async (req, res) => {
   try {
     const id = req.userId;
@@ -60,21 +69,22 @@ export const newPropsal = async (req, res) => {
 
 export const myproposal = async (req, res) => {
   try {
-    const id = req.userId;
-    const proposal = await proposalModel
-      .find({ buyerId: id })
+    const id = req.userId
+    const proposals = await proposalModel
+      .find({ buyerId: id ,status: { $in: ["requested", "Accepted", "Rejected"]  }})
       .populate("sellerId");
-    return res.status(200).json({ proposal });
+      // console.log(proposals);
+    return res.status(200).json({ proposals });
   } catch (error) {}
 };
 
 export const Ongoing = async (req, res) => {
   try {
     const id = req.userId;
-    const proposal = await proposalModel
-      .find({ buyerId: id, status: "ongoing" })
+    const proposals = await proposalModel
+      .find({ buyerId: id, status: "Active" })
       .populate("sellerId");
-    return res.status(200).json({ proposal });
+    return res.status(200).json({ proposals });
   } catch (error) {}
 };
 
@@ -84,7 +94,6 @@ export const categoryfilter = async (req, res) => {
     const { title } = category;
 
     const allpost = await postModel.find({ cat: title }).populate("userId");
-    console.log(allpost);
     return res.status(200).json({ allpost });
   } catch (error) {}
 };
@@ -92,7 +101,6 @@ export const categoryfilter = async (req, res) => {
 
 
 export const payment = async (req, res) => {
-  console.log("payment function");
   const stripe = new Stripe(
     "sk_test_51NdqznSGqo6y3mFMGrrPnHxQGosfEFn1hvalkVIEzlHUPGSXJWIRsx9c8H6io4HFPd8FbhVx6T2dbhd9RMLsTAK600ObAT9Nzp"
   );
@@ -109,12 +117,39 @@ export const payment = async (req, res) => {
     },
   });
 
-  console.log(paymentIntent);
+ 
 
   res.status(200).json({
     clientSecret: paymentIntent.client_secret
   })
 };
+
+export const  preposalPayment = async (req, res) => {
+  const stripe = new Stripe(
+    "sk_test_51NdqznSGqo6y3mFMGrrPnHxQGosfEFn1hvalkVIEzlHUPGSXJWIRsx9c8H6io4HFPd8FbhVx6T2dbhd9RMLsTAK600ObAT9Nzp"
+  );
+
+  const preposal = await proposalModel.findById(req.params.id);
+  const price = preposal.price;
+
+  // Create a PaymentIntent with the order amount and currency
+  const paymentIntent = await stripe.paymentIntents.create({
+    amount: price*100,
+    currency: "inr",
+    automatic_payment_methods: {
+      enabled: true,
+    },
+  });
+
+ 
+
+  res.status(200).json({
+    clientSecret: paymentIntent.client_secret
+  })
+};
+
+
+
 
 
 
@@ -169,6 +204,25 @@ export const getChat = async(req,res)=>{
     
   }
 }
+
+export const getAllContacts = async (req, res) => {
+  try {
+    let senderIds
+    const { freelancerId } = req.query;
+    await chatModel.distinct("sender").then((res) => {
+       senderIds = res
+        .map((sender) => sender.toString())
+        .filter((x) => x !== freelancerId);
+    });
+    userModel.find({ _id: { $in: senderIds } }, { username: 1, img: 1 }).then(
+      (users) => {
+        res.status(200).json({ success: true, users });
+      }
+    );
+  } catch (error) {}
+};
+
+
 
 export const addMessage = async (req, res) => {
   try {
@@ -227,7 +281,7 @@ export const getAllMessages = async (req, res) => {
       }
 
       return {
-        fromSelf: msg.sender.toString() === from,
+        fromSelf: msg.sender.toString() === to,
         message: msg.message.text,
         time: timeString,
       };
@@ -251,3 +305,85 @@ export const senderDetails = async (req, res) => {
     // return res.status(500).json({ error });
   }
 };
+
+
+export const findUser = async(req,res)=>{
+  try {
+    const {userId}=req.query;
+    const user = await userModel.findById(userId)
+    res.json({user})
+  } catch (error) {
+    
+  }
+}
+
+
+export const createPreposal = async(req,res)=>{
+  try {
+    const Gig = await postModel.findById({_id:req.body.gigId})
+
+    const newProposal = new proposalModel({
+      buyerId: req.userId,
+      sellerId: Gig.userId,
+      recuriment:Gig.desc,
+      timePeriod:Gig.deliveryTime,
+      price:Gig.price,
+      status:"Active"
+    });
+
+    let proposal = await newProposal.save().then(console.log("created"))
+
+  } catch (error) {
+    
+  }
+}
+
+export const PayPreposal = async(req,res)=>{
+  try {
+    const preposal = await proposalModel.findByIdAndUpdate(
+      {_id:req.body.propId},
+      {
+        $set:{
+          status:"Active"
+        }
+      },
+      { new: true }
+    )
+     if(preposal){
+            return res.status(200).json({updated:true})
+        }
+
+  } catch (error) {
+    
+  }
+}
+
+export const Recieved =async(req,res)=>{
+  try {
+    
+    const proposal = await proposalModel.findByIdAndUpdate(
+      {_id:req.body.PreposalId},
+      {
+        $set:{
+          received:"true"
+        }
+      },
+      { new: true }
+
+      )
+    if(proposal){
+      res.status(200).json({ message:"sucess" })
+    }
+  } catch (error) {
+    
+  }
+}
+
+export const history = async(req,res)=>{
+    try {
+        const proposals = await proposalModel.find({buyerId:req.userId,status:"completed"}).populate("sellerId");
+        return res.status(200).json({proposals})
+    } catch (error) {
+        
+    }
+}

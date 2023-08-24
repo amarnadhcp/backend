@@ -20,7 +20,7 @@ const userSchema = new Schema({
     required: false,
   },
   skills: {
-    type: [],
+    type: [String],
     required: false,
   },
   country: {
@@ -54,6 +54,10 @@ const userSchema = new Schema({
   isSeller: {
     type: Boolean,
     default:false
+  },
+    wallet:{
+    type:Number,
+    required: false,
   },
   status:{
     type:Boolean,

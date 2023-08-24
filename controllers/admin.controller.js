@@ -6,6 +6,7 @@ import userModel from "../modals/user.model.js";
 import categoryModel from "../modals/category.model.js";
 
 import { uploadToCloudinary } from "../utils/cloudinary.js";
+import ProposalModel from "../modals/proposal.modal.js";
 
 export const login = async(req,res,next)=>{
     try {
@@ -84,3 +85,38 @@ export const userManage = async(req,res,next)=>{
     }
 }
 
+export const PayFreelancer = async(req,res)=>{
+    try {
+        const {FreelancerId,Price,ProposalId}=req.body
+        const updatedFreelancer = await userModel.findByIdAndUpdate(
+            FreelancerId,
+            {
+        
+              $inc: { wallet: Price } 
+            },
+            { new: true } 
+          );
+
+        const updatePreposal = await ProposalModel.findByIdAndUpdate(
+            ProposalId,
+            { $set:{status:"completed"},},
+            { new: true } 
+        )
+        
+          if(updatedFreelancer && updatePreposal){
+            res.status(200).json({ message:"sucess" })
+          }
+
+    } catch (error) {
+        
+    }
+}
+
+export const Allworks = async(req,res)=>{
+    try {
+        const proposals = await ProposalModel.find({}).populate("buyerId").populate("sellerId");
+        return res.status(200).json({proposals})
+    } catch (error) {
+        
+    }
+}

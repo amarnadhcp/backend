@@ -25,7 +25,19 @@ const proposalSchema = new Schema({
   },
   status: {
     type: String,
-    default: "sent",
+    default: "requested",
+  },
+  completed: {
+    type:Boolean,
+    default: "false",
+  },
+  payment_intent: {
+      type: String,
+      required: false,
+    },
+  received: {
+    type:Boolean,
+    default: "false",
   },
   reason: {
     type: String,

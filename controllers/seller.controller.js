@@ -1,4 +1,4 @@
-import { uploadToCloudinary ,MultiUploadCloudinary} from "../utils/cloudinary.js";
+import { MultiUploadCloudinary, uploadToCloudinary } from "../utils/cloudinary.js";
 import postModel from "../modals/post.model.js";
 import ProposalModel from "../modals/proposal.modal.js"
 import userModel from "../modals/user.model.js";
@@ -53,15 +53,17 @@ export const AllGigs =async(req,res)=>{
 }
 
 
-export const allProposal = async(req,res)=>{
+
+export const allProposal = async (req, res) => {
     try {
-        const sellerId = req.userId;
-        const proposal = await ProposalModel.find({sellerId:sellerId }).populate("buyerId").populate("sellerId");
-        return res.status(200).json({proposal})
-    } catch (error) {
-        
-    }
-}
+        const id = req.userId;
+        const proposals = await ProposalModel
+            .find({ sellerId: id, status: { $in: ["requested", "Accepted", "Rejected"] } })
+            .populate("buyerId");
+        return res.status(200).json({ proposals });
+    } catch (error) {}
+  };
+
 
 export const proposalstatus = async(req,res)=>{
     try {
@@ -89,8 +91,8 @@ export const proposalstatus = async(req,res)=>{
 export const Allongoing = async(req,res)=>{
     try {
         const id = req.userId;
-        const proposal = await ProposalModel.find({sellerId:id,status:"ongoing"}).populate("buyerId");
-        return res.status(200).json({proposal})
+        const proposals = await ProposalModel.find({sellerId:id,status:"Active"}).populate("buyerId");
+        return res.status(200).json({proposals})
     } catch (error) {
         
     }
@@ -127,8 +129,57 @@ export const EditProfile= async(req,res)=>{
     }
 }
 
+export const uploadImage= async(req,res)=>{
+    try {
+        const uploadedImage = await uploadToCloudinary(req.file.path,"Profile")
+        const updatedImage = await userModel.findByIdAndUpdate(
+            {_id:req.userId},
+            {
+                $set:{
+                    img:uploadedImage.url
+                }
+            },
+            { new: true }
+        )
+            
+        if(updation){
+            return res.status(200).json({updated:true})
+        }
+
+    } catch (error) {
+        
+    }
+}
 
 
+export const WorkCompleted =async(req,res)=>{
+    try {
+      const proposal = await ProposalModel.findByIdAndUpdate(
+        {_id:req.body.proposalId},
+        {
+          $set:{
+            completed:"true"
+          }
+        },
+        { new: true }
+  
+        )
+      if(proposal){
+        res.status(200).json({ message:"sucess" })
+      }
+    } catch (error) {
+      
+    }
+  }
+
+export const history = async(req,res)=>{
+    try {
+        const proposals = await ProposalModel.find({sellerId:req.userId,completed:"true",received:"true"}).populate("buyerId");
+        return res.status(200).json({proposals})
+    } catch (error) {
+        
+    }
+}
 
 
 
