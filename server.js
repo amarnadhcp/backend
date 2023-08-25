@@ -49,7 +49,7 @@ app.use((err, req, res, next) => {
 
 const server = app.listen(8800, () => {
   connect();
-  console.log("bakecnt is working");
+  console.log("backend is working");
 });
 
 socketUtils.initialize(server);
